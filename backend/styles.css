@@ -1,0 +1,25 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+h1, h2, h3 {
+    color: #333;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+input, button {
+    display: block;
+    margin-bottom: 10px;
+}
+
+#company-list {
+    margin-top: 20px;
+}
+
+#insights {
+    margin-top: 20px;
+}
