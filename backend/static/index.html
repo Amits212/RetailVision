@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <h1>Signup</h1>
+    <form id="signup-form">
+        <label>
+            Username:
+            <input type="text" name="username" required>
+        </label>
+        <label>
+            Password:
+            <input type="password" name="password" required>
+        </label>
+        <label>
+            Signup as:
+            <select name="signup_as" id="signup-as">
+                <option value="user">User</option>
+                <option value="company">Company</option>
+            </select>
+        </label>
+        <div id="user-fields">
+            <label>
+                First Name:
+                <input type="text" name="first_name" required>
+            </label>
+            <label>
+                Last Name:
+                <input type="text" name="last_name" required>
+            </label>
+            <label>
+                Address:
+                <input type="text" name="address" required>
+            </label>
+            <label>
+                Email:
+                <input type="email" name="email" required>
+            </label>
+        </div>
+        <div id="company-fields" style="display: none;">
+            <label>
+                Company Name:
+                <input type="text" name="name">
+            </label>
+            <label>
+                Company Description:
+                <textarea name="description"></textarea>
+            </label>
+        </div>
+        <button type="submit">Signup</button>
+    </form>
+</body>
+</html>

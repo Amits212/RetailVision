@@ -2,7 +2,7 @@ from typing import List
 from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from models import Product, Company, UserLogin, UserSignUp, CompanySignUp
+from models import Product, Company, UserSignUp, CompanySignUp, Purchase
 
 client = AsyncIOMotorClient('mongodb://mongo:27017')
 db = client.db
@@ -10,17 +10,20 @@ users_collection = db.users
 company_users_collection = db.company_users
 products_collection = db.products
 companies_collection = db.companies
+purchases_collection = db.purchases
 
-async def get_user_from_db(user_id: str):
-    return await users_collection.find_one({"id": user_id})
+async def get_user_from_db(username: str):
+    return await users_collection.find_one({"username": username})
 
-async def get_company_user_from_db(company_user_id: str):
-    return await company_users_collection.find_one({"id": company_user_id})
+async def get_company_user_from_db(username: str):
+    return await company_users_collection.find_one({"username": username})
 
 async def save_customer_user_to_db(user: UserSignUp):
     await users_collection.insert_one(user.dict())
 
 async def save_company_user_to_db(company_user: CompanySignUp):
+    company = company_user.company
+    await companies_collection.insert_one(company.dict())
     await company_users_collection.insert_one(company_user.dict())
 
 async def get_all_companies_from_db():
@@ -28,49 +31,53 @@ async def get_all_companies_from_db():
     companies = await cursor.to_list(length=100)
     return [Company(**company) for company in companies]
 
-async def get_all_company_products_from_db(company_id: int):
+async def get_all_company_products_from_db(company_id: str):
     company = await companies_collection.find_one({"id": company_id})
     if company:
         return [Product(**product) for product in company.get('products', [])]
     return []
 
-async def get_company_from_db(company_id: int):
+async def get_company_from_db(company_id: str):
     return await companies_collection.find_one({"id": company_id})
 
-async def get_product_from_db(product_id: int):
+async def get_product_from_db(product_id: str):
     return await products_collection.find_one({"id": product_id})
 
 async def create_company_in_db(company: Company):
     await companies_collection.insert_one(company.dict())
 
-async def create_product_in_db(product: Product):
+async def create_product_in_db(company_id: str, product: Product):
     await products_collection.insert_one(product.dict())
+    await companies_collection.update_one(
+        {"id": company_id},
+        {"$push": {"products": product.dict()}}
+    )
 
-async def update_company_in_db(company_id: int, company: Company):
+async def update_company_in_db(company_id: str, company: Company):
     result = await companies_collection.update_one({"id": company_id}, {"$set": company.dict()})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Company not found")
     return result
 
-async def update_product_in_db(product_id: int, product: Product):
+async def update_product_in_db(product_id: str, product: Product):
     result = await products_collection.update_one({"id": product_id}, {"$set": product.dict()})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Product not found")
     return result
 
-async def delete_company_from_db(company_id: int):
+async def delete_company_from_db(company_id: str):
     result = await companies_collection.delete_one({"id": company_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Company not found")
     return result
 
-async def delete_product_from_db(product_id: int):
+async def delete_product_from_db(product_id: str):
     result = await products_collection.delete_one({"id": product_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Product not found")
     return result
 
-async def update_product_purchase_count(product_id: int, increment: int):
+async def update_product_purchase_count(product_id: str, increment: int):
     result = await products_collection.update_one(
         {"id": product_id},
         {"$inc": {"purchase_count": increment}}
@@ -84,7 +91,7 @@ async def create_purchase(purchase: Purchase):
         await update_product_purchase_count(product.id, 1)
     await purchases_collection.insert_one(purchase.dict())
 
-async def get_company_product_insights(company_id: int):
+async def get_company_product_insights(company_id: str):
     company = await companies_collection.find_one({"id": company_id})
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")

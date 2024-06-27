@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Body, HTTPException, Depends, Request
-from starlette import status
+from fastapi import APIRouter, Body, HTTPException, status, Depends
 from models import Product, Company, UserLogin, UserSignUp, CompanySignUp, Purchase
 from database import (
     save_customer_user_to_db,
     save_company_user_to_db,
     get_user_from_db,
+    get_company_user_from_db,
     get_all_companies_from_db,
     get_all_company_products_from_db,
-    get_company_user_from_db,
     get_company_from_db,
     get_product_from_db,
     create_company_in_db,
@@ -30,46 +29,46 @@ async def get_all_companies():
     return companies
 
 @router.get("/api/{company_id}/products")
-async def get_all_company_products(company_id: int):
+async def get_all_company_products(company_id: str):
     products = await get_all_company_products_from_db(company_id=company_id)
     return products
 
 @router.get("/api/companies/{company_id}")
-async def get_company(company_id: int):
+async def get_company(company_id: str):
     company = await get_company_from_db(company_id=company_id)
     if company:
         return company
     raise HTTPException(status_code=404, detail="Company not found")
 
 @router.get("/api/products/{product_id}")
-async def get_product(product_id: int):
+async def get_product(product_id: str):
     product = await get_product_from_db(product_id=product_id)
     if product:
         return product
     raise HTTPException(status_code=404, detail="Product not found")
 
 @router.post("/api/products")
-async def create_product(product: Product):
-    await create_product_in_db(product=product)
+async def create_product(company_id: str, product: Product):
+    await create_product_in_db(company_id=company_id, product=product)
     return {"message": "Product created successfully"}
 
 @router.put("/api/companies/{company_id}")
-async def update_company(company_id: int, company: Company):
+async def update_company(company_id: str, company: Company):
     await update_company_in_db(company_id=company_id, company=company)
     return {"message": "Company updated successfully"}
 
 @router.put("/api/products/{product_id}")
-async def update_product(product_id: int, product: Product):
+async def update_product(product_id: str, product: Product):
     await update_product_in_db(product_id=product_id, product=product)
     return {"message": "Product updated successfully"}
 
 @router.delete("/api/companies/{company_id}")
-async def delete_company(company_id: int):
+async def delete_company(company_id: str):
     await delete_company_from_db(company_id=company_id)
     return {"message": "Company deleted successfully"}
 
 @router.delete("/api/products/{product_id}")
-async def delete_product(product_id: int):
+async def delete_product(product_id: str):
     await delete_product_from_db(product_id=product_id)
     return {"message": "Product deleted successfully"}
 
@@ -79,10 +78,9 @@ async def create_user_purchase(purchase: Purchase):
     return {"message": "Purchase created successfully"}
 
 @router.get("/api/companies/{company_id}/insights")
-async def get_product_insights(company_id: int):
+async def get_product_insights(company_id: str):
     insights = await get_company_product_insights(company_id)
     return insights
-
 
 @router.post("/api/login")
 async def login(user: UserLogin):
@@ -109,3 +107,9 @@ async def sign_up(user: UserSignUp):
     user.password = pwd_context.hash(user.password)
     await save_customer_user_to_db(user)
     return {"message": "User signed up successfully"}
+
+@router.post("/api/companysignup")
+async def company_sign_up(company_user: CompanySignUp):
+    company_user.password = pwd_context.hash(company_user.password)
+    await save_company_user_to_db(company_user)
+    return {"message": "Company user signed up successfully"}

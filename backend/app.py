@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from routes import router
 from fastapi.middleware.cors import CORSMiddleware
-
+import os
 
 app = FastAPI()
 
@@ -22,7 +23,6 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
         content={"detail": str(exc)},
     )
 
-
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
@@ -31,3 +31,10 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 app.include_router(router)
+
+# Mount the static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def serve_index():
+    return FileResponse(os.path.join("static", "index.html"))

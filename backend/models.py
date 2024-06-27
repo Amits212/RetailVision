@@ -13,7 +13,7 @@ class Company(BaseModel):
     name: str
     description: Optional[str] = None
     image: Optional[str] = None
-    products: Optional[List[Product]] = None
+    products: Optional[List[Product]] = []
 
 class UserLogin(BaseModel):
     username: str
